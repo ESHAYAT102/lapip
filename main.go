@@ -163,9 +163,18 @@ func percent(count, total int) float64 {
 	return float64(count) * 100 / float64(total)
 }
 
-func (a *analyzer) report(w io.Writer, topN int, markdown bool) {
+func (a *analyzer) report(w io.Writer, topN int, markdown, numbers bool) {
 	for _, item := range top(a.passwords, topN) {
 		fmt.Fprintln(w, item.name)
+		if numbers {
+			for _, separator := range []string{"", "."} {
+				for _, suffix := range []struct{ width, limit int }{{3, 1000}, {4, 10000}} {
+					for number := 0; number < suffix.limit; number++ {
+						fmt.Fprintf(w, "%s%s%0*d\n", item.name, separator, suffix.width, number)
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -187,7 +196,8 @@ func main() {
 	topN := flag.Int("t", 10, "number of top results")
 	output := flag.String("o", "", "write report to file")
 	markdown := flag.Bool("m", false, "write Markdown output")
-	flag.Usage = func() { fmt.Fprintln(os.Stderr, "Usage: lapip [-t N] [-o FILE] [-m] FILE") }
+	numbers := flag.Bool("numbers", false, "add every 3- and 4-digit suffix, with and without a dot")
+	flag.Usage = func() { fmt.Fprintln(os.Stderr, "Usage: lapip [-t N] [-o FILE] [-m] [-numbers] FILE") }
 	flag.Parse()
 	if *topN <= 0 || flag.NArg() != 1 {
 		flag.Usage()
@@ -220,5 +230,5 @@ func main() {
 		defer file.Close()
 		out = file
 	}
-	a.report(out, *topN, *markdown)
+	a.report(out, *topN, *markdown, *numbers)
 }

@@ -34,6 +34,7 @@ Options:
 -t int              number of top results (default 10)
 -o file             write the report to a file instead of stdout
 -m                 emit Markdown output
+-numbers           add every 3- and 4-digit suffix, with and without a dot
 ```
 
 Examples:
@@ -41,6 +42,7 @@ Examples:
 ```sh
 ./lapip -t 20 -o report.txt passwords.txt
 ./lapip -m passwords.txt > report.md
+./lapip -numbers -o candidates.txt words.txt
 ```
 
 ## Uninstall
