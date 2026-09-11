@@ -34,7 +34,7 @@ Options:
 -t int              number of top results (default 10)
 -o file             write the report to a file instead of stdout
 -m                 emit Markdown output
--numbers           add every 3- and 4-digit suffix, with and without a dot
+-numbers           add leetspeak variants and every 3- and 4-digit suffix, with no separator or one of .@#$!%&*_-+=
 ```
 
 Examples:
@@ -44,6 +44,14 @@ Examples:
 ./lapip -m passwords.txt > report.md
 ./lapip -numbers -o candidates.txt words.txt
 ```
+
+`-numbers` independently keeps, uppercases, lowercases, or substitutes each letter:
+`a → @`, `e → 3`, `s → 5`, `i/l → 1`, `o → 0`, `t → 7`, `b → 8`, `g → 9`
+(uppercase letters work too). Every variant receives the numeric suffixes.
+For example, `PASS` produces `P@SS`, `P@5S`, `P@S5`, `P@55`, `PA5S`, `PAS5`,
+`PA55`, and `PASS`, plus lowercase and mixed-case combinations.
+Variants are streamed, but output grows exponentially: `PASS` has 54 variants,
+producing 7,722,054 lines including all numeric suffixes and separators.
 
 ## Uninstall
 

@@ -163,18 +163,46 @@ func percent(count, total int) float64 {
 	return float64(count) * 100 / float64(total)
 }
 
+func eachVariant(word string, emit func(string)) {
+	runes := []rune(word)
+	var walk func(int)
+	walk = func(pos int) {
+		if pos == len(runes) {
+			emit(string(runes))
+			return
+		}
+		original := runes[pos]
+		choices := []rune{original, unicode.ToLower(original), unicode.ToUpper(original)}
+		if i := strings.IndexRune("aesioltbg", unicode.ToLower(original)); i >= 0 {
+			choices = append(choices, rune("@35101789"[i]))
+		}
+		for i, r := range choices {
+			if !strings.ContainsRune(string(choices[:i]), r) {
+				runes[pos] = r
+				walk(pos + 1)
+			}
+		}
+		runes[pos] = original
+	}
+	walk(0)
+}
+
 func (a *analyzer) report(w io.Writer, topN int, markdown, numbers bool) {
 	for _, item := range top(a.passwords, topN) {
-		fmt.Fprintln(w, item.name)
-		if numbers {
-			for _, separator := range []string{"", "."} {
+		if !numbers {
+			fmt.Fprintln(w, item.name)
+			continue
+		}
+		eachVariant(item.name, func(word string) {
+			fmt.Fprintln(w, word)
+			for _, separator := range []string{"", ".", "@", "#", "$", "!", "%", "&", "*", "_", "-", "+", "="} {
 				for _, suffix := range []struct{ width, limit int }{{3, 1000}, {4, 10000}} {
 					for number := 0; number < suffix.limit; number++ {
-						fmt.Fprintf(w, "%s%s%0*d\n", item.name, separator, suffix.width, number)
+						fmt.Fprintf(w, "%s%s%0*d\n", word, separator, suffix.width, number)
 					}
 				}
 			}
-		}
+		})
 	}
 }
 
@@ -196,7 +224,7 @@ func main() {
 	topN := flag.Int("t", 10, "number of top results")
 	output := flag.String("o", "", "write report to file")
 	markdown := flag.Bool("m", false, "write Markdown output")
-	numbers := flag.Bool("numbers", false, "add every 3- and 4-digit suffix, with and without a dot")
+	numbers := flag.Bool("numbers", false, "add leetspeak variants and every 3- and 4-digit suffix, with no separator or one of .@#$!%&*_-+=")
 	flag.Usage = func() { fmt.Fprintln(os.Stderr, "Usage: lapip [-t N] [-o FILE] [-m] [-numbers] FILE") }
 	flag.Parse()
 	if *topN <= 0 || flag.NArg() != 1 {
